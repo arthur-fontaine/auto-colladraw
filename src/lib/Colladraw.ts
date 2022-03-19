@@ -65,6 +65,7 @@ export default class Colladraw {
         if (this.state.selectedElement) {
           this.removeElement(this.state.selectedElement);
           this.draw();
+          this.generateGrid();
           this.state.selectedElement.deselect();
           this.state.selectedElement = false;
           this.state.selectionTransform = false;
