@@ -19,12 +19,10 @@ export default class Colladraw {
   canvas: {
     canvas: HTMLCanvasElement,
     elements: CanvasElement[],
-  }[];
-  _activeCanvasIndex: number = 0;
+  };
   context: CanvasRenderingContext2D;
   grid: CanvasGrid;
   gridPixelMerge: number = 5;
-  optimized: boolean;
   background: HTMLCanvasElement;
   backgroundColor: string = '#fafafa';
   private state: State = {
@@ -34,34 +32,28 @@ export default class Colladraw {
       redo: [],
     },
   };
-  private selectionLastActiveCanvasIndex?: number;
   private onClickLocker: boolean = false;
-  private readonly canvasContainer?: HTMLDivElement;
 
-  constructor(canvas: HTMLCanvasElement, optimize: boolean = true, gridPixelMerge: number = 5) {
+  constructor(canvas: HTMLCanvasElement, gridPixelMerge: number = 5) {
     document.head.appendChild(document.createElement("script")).src = "https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js";
 
-    this.canvas = [{
+    this.canvas = {
       canvas,
       elements: [],
-    }];
-    this.updateActiveCanvas();
-    this.optimized = optimize;
+    };
     this.gridPixelMerge = gridPixelMerge;
 
-    if (this.optimized) {
-      this.canvasContainer = document.createElement("div");
-      this.canvasContainer.classList.add("canvas-container", "canvas-container-optimized");
-      const canvasParent = canvas.parentElement;
-      this.canvasContainer.appendChild(canvas);
-      canvasParent.appendChild(this.canvasContainer);
-      const context = canvas.getContext("2d");
-      context.fillStyle = this.backgroundColor;
-      context.fillRect(0, 0, canvas.width, canvas.height);
-      this.background = canvas;
-    }
+    const context = canvas.getContext("2d");
+    context.fillStyle = this.backgroundColor;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    this.background = canvas;
 
     this.addToHistory();
+
+    this.canvas.canvas.addEventListener('mousedown', this.onMouseDown.bind(this));
+    this.canvas.canvas.addEventListener('mouseup', this.onMouseUp.bind(this));
+    this.canvas.canvas.addEventListener('mousemove', this.onMouseMove.bind(this));
+    this.canvas.canvas.addEventListener('click', this.onClick.bind(this));
 
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Backspace') {
@@ -83,34 +75,15 @@ export default class Colladraw {
       }
     });
 
-    this.activeCanvas.canvas.width = window.innerWidth;
-    this.activeCanvas.canvas.height = window.innerHeight;
-
     this.initGrid();
-  }
-
-  get activeCanvasIndex(): number {
-    return this._activeCanvasIndex;
-  }
-
-  set activeCanvasIndex(index: number) {
-    this._activeCanvasIndex = index;
-    this.updateActiveCanvas();
-  }
-
-  get activeCanvas(): {
-    canvas: HTMLCanvasElement,
-    elements: CanvasElement[],
-  } {
-    return this.canvas[this.activeCanvasIndex];
   }
 
   private initGrid() {
     this.grid = []
-    for (let i = 0; i < this.activeCanvas.canvas.width; i++) {
+    for (let i = 0; i < this.canvas.canvas.width; i++) {
       this.grid.push([]);
 
-      for (let j = 0; j < this.activeCanvas.canvas.height; j++) {
+      for (let j = 0; j < this.canvas.canvas.height; j++) {
         this.grid[i].push(null);
       }
     }
@@ -124,28 +97,12 @@ export default class Colladraw {
     }
   }
 
-  private updateActiveCanvas() {
-    this.context = this.activeCanvas.canvas.getContext("2d");
-
-    this.canvas.forEach((canvas) => {
-      canvas.canvas.removeEventListener('mousedown', this.onMouseDown.bind(this));
-      canvas.canvas.removeEventListener('mouseup', this.onMouseUp.bind(this));
-      canvas.canvas.removeEventListener('mousemove', this.onMouseMove.bind(this));
-    })
-
-    this.activeCanvas.canvas.addEventListener('mousedown', this.onMouseDown.bind(this));
-    this.activeCanvas.canvas.addEventListener('mouseup', this.onMouseUp.bind(this));
-    this.activeCanvas.canvas.addEventListener('mousemove', this.onMouseMove.bind(this));
-    this.activeCanvas.canvas.removeEventListener('click', this.onClick.bind(this));
-    this.activeCanvas.canvas.addEventListener('click', this.onClick.bind(this));
-  }
-
   draw(clear: boolean = true) {
     if (clear) {
-      this.context.clearRect(0, 0, this.activeCanvas.canvas.width, this.activeCanvas.canvas.height);
+      this.context.clearRect(0, 0, this.canvas.canvas.width, this.canvas.canvas.height);
     }
 
-    const elementsToDraw = this.activeCanvas.elements.concat(this.state.drawing && (this.state.drawing.shape || this.state.drawing.line) ? this.state.drawing.shape ?? this.state.drawing.line : []);
+    const elementsToDraw = this.canvas.elements.concat(this.state.drawing && (this.state.drawing.shape || this.state.drawing.line) ? this.state.drawing.shape ?? this.state.drawing.line : []);
 
     elementsToDraw.forEach(element => {
       if (element instanceof Shape) {
@@ -175,8 +132,8 @@ export default class Colladraw {
   }
 
   addElement(element: CanvasElement, toAddToHistory: boolean = true) {
-    this.activeCanvas.canvas.dispatchEvent(CanvasEvents.CanvasElementCreated(element));
-    this.activeCanvas.elements.push(element);
+    this.canvas.canvas.dispatchEvent(CanvasEvents.CanvasElementCreated(element));
+    this.canvas.elements.push(element);
 
     if (toAddToHistory) {
       this.addToHistory();
@@ -184,34 +141,15 @@ export default class Colladraw {
   }
 
   removeElement(elementToDelete: CanvasElement) {
-    this.activeCanvas.elements = this.activeCanvas.elements.filter(element => element !== elementToDelete);
+    this.canvas.elements = this.canvas.elements.filter(element => element !== elementToDelete);
     this.addToHistory();
   }
 
   get elements(): CanvasElement[] {
-    return this.canvas.flatMap(canvas => canvas.elements);
-  }
-
-  addLayer() {
-    const newCanvas = document.createElement("canvas");
-    newCanvas.width = this.canvasContainer.clientWidth;
-    newCanvas.height = this.canvasContainer.clientHeight;
-    this.canvasContainer.appendChild(newCanvas);
-    this.canvas.push({
-      canvas: newCanvas,
-      elements: [],
-    });
-    this.activeCanvasIndex = this.canvas.length - 1;
-    this.updateActiveCanvas();
+    return this.canvas.elements;
   }
 
   addToHistory() {
-    if (this.optimized) {
-      this.addLayer();
-      this.activeCanvasIndex = this.canvas.length - 1;
-      this.updateActiveCanvas();
-    }
-
     this.state.history.current = this.toJSON();
     this.state.history.undo.push(this.state.history.current);
   }
@@ -391,7 +329,7 @@ export default class Colladraw {
         if (this.state.drawing && this.state.drawing.shape) {
           this.state.drawing.shape.width = this.state.drawing.endPoint.x - this.state.drawing.startPoint.x;
           this.state.drawing.shape.height = this.state.drawing.endPoint.y - this.state.drawing.startPoint.y;
-          this.activeCanvas.canvas.dispatchEvent(CanvasEvents.CanvasElementMoved(this.state.drawing.shape, event));
+          this.canvas.canvas.dispatchEvent(CanvasEvents.CanvasElementMoved(this.state.drawing.shape, event));
 
           //   if (this.state.drawing.shape.width < 0) {
           //     this.state.drawing.shape.width = Math.abs(this.state.drawing.shape.width);
@@ -407,7 +345,7 @@ export default class Colladraw {
         } else if (this.state.drawing && this.state.drawing.line) {
           this.state.drawing.line.endX = this.state.drawing.endPoint.x;
           this.state.drawing.line.endY = this.state.drawing.endPoint.y;
-          this.activeCanvas.canvas.dispatchEvent(CanvasEvents.CanvasElementMoved(this.state.drawing.line, event));
+          this.canvas.canvas.dispatchEvent(CanvasEvents.CanvasElementMoved(this.state.drawing.line, event));
         }
       }
     } else if (this.state.selectionTransform) {
@@ -423,8 +361,8 @@ export default class Colladraw {
           this.state.selectedElement.endY = this.state.selectedElement.endY + (this.state.selectedElement.y - oldY);
         }
 
-        this.activeCanvas.canvas.dispatchEvent(CanvasEvents.CanvasElementMoved(this.state.selectedElement, event));
-        this.activeCanvas.canvas.dispatchEvent(CanvasEvents.CanvasElementTransformed(this.state.selectedElement, {
+        this.canvas.canvas.dispatchEvent(CanvasEvents.CanvasElementMoved(this.state.selectedElement, event));
+        this.canvas.canvas.dispatchEvent(CanvasEvents.CanvasElementTransformed(this.state.selectedElement, {
           type: 'translate',
           x: this.state.selectionTransform.translate.grip.x,
           y: this.state.selectionTransform.translate.grip.y,
@@ -455,7 +393,7 @@ export default class Colladraw {
           ResizeFunctions.left(this.state, event);
         }
 
-        this.activeCanvas.canvas.dispatchEvent((CanvasEvents.CanvasElementTransformed(this.state.selectedElement, {
+        this.canvas.canvas.dispatchEvent((CanvasEvents.CanvasElementTransformed(this.state.selectedElement, {
           type: 'resize',
           x: this.state.selectedElement.x,
           y: this.state.selectedElement.y,
@@ -486,7 +424,7 @@ export default class Colladraw {
       this.addElement(this.state.typing.textElement);
     } else if (this.state.selectionTransform) {
       // this.initGrid();
-      // this.activeCanvas.elements.forEach(element => {
+      // this.canvas.elements.forEach(element => {
       //   element.generateGrid(this.grid);
       // });
     }
@@ -505,20 +443,18 @@ export default class Colladraw {
 
     if (clickedElement) {
       if (clickedElement.selectable) {
-        this.selectionLastActiveCanvasIndex = this.activeCanvasIndex.valueOf();
-        this.activeCanvasIndex = this.canvas.findIndex(canvas => canvas.elements.includes(clickedElement));
-        this.activeCanvas.canvas.dispatchEvent(CanvasEvents.CanvasElementClicked(clickedElement, event));
+        this.canvas.canvas.dispatchEvent(CanvasEvents.CanvasElementClicked(clickedElement, event));
 
         if (!this.state.drawing && !this.state.typing && !this.onClickLocker) {
           if (clickedElement && (!this.state.selectedElement || this.state.selectedElement == clickedElement)) {
             clickedElement.select();
-            this.activeCanvas.canvas.dispatchEvent(CanvasEvents.CanvasElementSelected(clickedElement));
+            this.canvas.canvas.dispatchEvent(CanvasEvents.CanvasElementSelected(clickedElement));
             this.state.selectedElement = clickedElement;
             this.draw();
           } else {
             if (this.state.selectedElement) {
               this.state.selectedElement.deselect()
-              this.activeCanvas.canvas.dispatchEvent(CanvasEvents.CanvasElementDeselected(this.state.selectedElement));
+              this.canvas.canvas.dispatchEvent(CanvasEvents.CanvasElementDeselected(this.state.selectedElement));
             }
             this.state.selectedElement = false;
             this.draw();
@@ -528,12 +464,7 @@ export default class Colladraw {
     } else if (this.state.selectedElement) {
       this.state.selectedElement.deselect();
 
-      if (this.selectionLastActiveCanvasIndex) {
-        this.activeCanvasIndex = this.selectionLastActiveCanvasIndex;
-        this.selectionLastActiveCanvasIndex = undefined;
-      }
-
-      this.activeCanvas.canvas.dispatchEvent(CanvasEvents.CanvasElementDeselected(this.state.selectedElement));
+      this.canvas.canvas.dispatchEvent(CanvasEvents.CanvasElementDeselected(this.state.selectedElement));
       this.state.selectedElement = false;
       this.draw();
     }
@@ -559,68 +490,40 @@ export default class Colladraw {
     return {
       timestamp: Date.now(),
       data: {
-        canvas: this.canvas.map(canvas => ({
-          elements: canvas.elements.map(element => element.toJSON()),
-        })),
+        elements: this.elements.map(element => element.toJSON()),
       }
     };
   }
 
   load(json: ExportCanvas) {
-    json.data.canvas.forEach(savedCanvas => {
-      if (this.optimized) {
-        const newCanvas = document.createElement("canvas");
-        newCanvas.width = this.activeCanvas.canvas.width;
-        newCanvas.height = this.activeCanvas.canvas.height;
-
-        this.canvasContainer.appendChild(newCanvas);
-        this.canvas.push({
-          canvas: newCanvas,
-          elements: [],
-        });
-        this.activeCanvasIndex = this.canvas.length - 1;
-        this.updateActiveCanvas();
-
-        this.activeCanvas.elements = savedCanvas.elements.map(shape => {
-          if (shape.type === 'Rectangle') {
-            return Rectangle.fromJSON(shape);
-          } else if (shape.type === 'Ellipse') {
-            return Ellipse.fromJSON(shape);
-          } else if (shape.type === 'Triangle') {
-            return Triangle.fromJSON(shape);
-          } else if (shape.type.match(/Polygon\[\d+]/)) {
-            return Polygon.fromJSON(shape as ExportShape);
-          } else if (shape.type === 'Line') {
-            return Line.fromJSON(shape as ExportLine);
-          } else if (shape.type === 'Text') {
-            return CanvasText.fromJSON(shape);
-          }
-
-          return Shape.fromJSON(shape);
-        });
-        this.draw();
+    this.canvas.elements = json.data.shapes.map(shape => {
+      if (shape.type === 'Rectangle') {
+        return Rectangle.fromJSON(shape);
+      } else if (shape.type === 'Ellipse') {
+        return Ellipse.fromJSON(shape);
+      } else if (shape.type === 'Triangle') {
+        return Triangle.fromJSON(shape);
+      } else if (shape.type.match(/Polygon\[\d+]/)) {
+        return Polygon.fromJSON(shape as ExportShape);
+      } else if (shape.type === 'Line') {
+        return Line.fromJSON(shape as ExportLine);
+      } else if (shape.type === 'Text') {
+        return CanvasText.fromJSON(shape);
       }
+
+      return Shape.fromJSON(shape)
     });
+    this.draw();
   }
 
   clear() {
-    for (let i = 0; i < this.canvas.length; i++) {
-      this.activeCanvasIndex = i;
-      this.updateActiveCanvas();
-      this.activeCanvas.elements = [];
-      this.draw();
-      this.canvasContainer.removeChild(this.canvas[i].canvas);
-    }
-    this.canvas = [];
+    this.canvas.elements = [];
+    this.draw();
     this.addToHistory();
     this.generateGrid();
   }
 
   toDataURL(): string {
-    this.addLayer();
-    this.activeCanvasIndex = this.canvas.length - 1;
-    this.updateActiveCanvas();
-
     this.context.fillStyle = this.backgroundColor;
     this.context.fillRect(0, 0, 999999, 999999);
     this.draw(false);
@@ -634,14 +537,7 @@ export default class Colladraw {
       this.draw(false);
     });
 
-    const image = this.activeCanvas.canvas.toDataURL();
-
-    this.canvasContainer.removeChild(this.activeCanvas.canvas);
-    this.canvas.pop();
-    this.activeCanvasIndex = this.canvas.length - 1;
-    this.updateActiveCanvas();
-
-    return image;
+    return this.canvas.canvas.toDataURL();
   }
 
   savePNG(name?: string): void {
@@ -654,13 +550,13 @@ export default class Colladraw {
   }
 
   savePDF(name?: string): void {
-    this.activeCanvas.elements.forEach((element) => element.deselect());
+    this.canvas.elements.forEach((element) => element.deselect());
     this.draw();
 
     // @ts-ignore
-    const doc = new jspdf.jsPDF(this.activeCanvas.canvas.width > this.activeCanvas.canvas.height ? 'landscape' : 'portrait', 'px', [this.activeCanvas.canvas.width, this.activeCanvas.canvas.height]);
+    const doc = new jspdf.jsPDF(this.canvas.canvas.width > this.canvas.canvas.height ? 'landscape' : 'portrait', 'px', [this.canvas.canvas.width, this.canvas.canvas.height]);
     const image = this.toDataURL();
-    doc.addImage(image, 'JPEG', 0, 0, this.activeCanvas.canvas.width, this.activeCanvas.canvas.height);
+    doc.addImage(image, 'JPEG', 0, 0, this.canvas.canvas.width, this.canvas.canvas.height);
     doc.save(name ?? 'canvas.pdf');
   }
 }

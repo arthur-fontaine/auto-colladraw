@@ -6,33 +6,21 @@ export default class Colladraw {
     canvas: {
         canvas: HTMLCanvasElement;
         elements: CanvasElement[];
-    }[];
-    _activeCanvasIndex: number;
+    };
     context: CanvasRenderingContext2D;
     grid: CanvasGrid;
     gridPixelMerge: number;
-    optimized: boolean;
     background: HTMLCanvasElement;
     backgroundColor: string;
     private state;
-    private selectionLastActiveCanvasIndex?;
     private onClickLocker;
-    private readonly canvasContainer?;
-    constructor(canvas: HTMLCanvasElement, optimize?: boolean, gridPixelMerge?: number);
-    get activeCanvasIndex(): number;
-    set activeCanvasIndex(index: number);
-    get activeCanvas(): {
-        canvas: HTMLCanvasElement;
-        elements: CanvasElement[];
-    };
+    constructor(canvas: HTMLCanvasElement, gridPixelMerge?: number);
     private initGrid;
     generateGrid(): void;
-    private updateActiveCanvas;
     draw(clear?: boolean): void;
     addElement(element: CanvasElement, toAddToHistory?: boolean): void;
     removeElement(elementToDelete: CanvasElement): void;
     get elements(): CanvasElement[];
-    addLayer(): void;
     addToHistory(): void;
     undo(): void;
     redo(): void;
