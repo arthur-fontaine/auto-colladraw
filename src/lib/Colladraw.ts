@@ -29,24 +29,24 @@ export default class Colladraw {
     variables: {},
     history: {
       undo: [],
-      redo: [],
-    },
+      redo: []
+    }
   };
   private onClickLocker: boolean = false;
 
   constructor(canvas: HTMLCanvasElement, gridPixelMerge: number = 5) {
-    document.head.appendChild(document.createElement("script")).src = "https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js";
+    document.head.appendChild(document.createElement('script')).src = 'https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js';
 
     canvas.width = canvas.clientWidth;
     canvas.height = canvas.clientHeight;
 
     this.canvas = {
       canvas,
-      elements: [],
+      elements: []
     };
     this.gridPixelMerge = gridPixelMerge;
 
-    this.context = canvas.getContext("2d");
+    this.context = canvas.getContext('2d');
     this.context.fillStyle = this.backgroundColor;
     this.context.fillRect(0, 0, canvas.width, canvas.height);
     this.background = canvas;
@@ -82,7 +82,7 @@ export default class Colladraw {
   }
 
   private initGrid() {
-    this.grid = []
+    this.grid = [];
     for (let i = 0; i < this.canvas.canvas.height; i++) {
       this.grid.push([]);
 
@@ -98,6 +98,10 @@ export default class Colladraw {
     } else {
       this.initGrid();
     }
+  }
+
+  private getClickedElement(event: MouseEvent) {
+    return this.grid[event.offsetY + this.gridPixelMerge - (event.offsetY % this.gridPixelMerge)][event.offsetX + this.gridPixelMerge - (event.offsetX % this.gridPixelMerge)];
   }
 
   draw(clear: boolean = true) {
@@ -176,24 +180,27 @@ export default class Colladraw {
   }
 
   onMouseDown(event: MouseEvent) {
-    const clickedShape = this.grid[event.offsetY][event.offsetX];
+    const clickedElement = this.getClickedElement(event);
 
-    if (!clickedShape && !this.state.selectedElement) {
+    if (!clickedElement) {
+      if (this.state.selectedElement) this.state.selectedElement.deselect();
+      this.state.selectedElement = false;
+      this.state.selectionTransform = false;
+
       this.onClickLocker = true;
 
       const x = event.offsetX;
       const y = event.offsetY;
-      // const toolType: CanvasElementType = CanvasElementType.TEXT;
       const toolType: CanvasElementType = this.state.variables.toolType ?? CanvasElementType.RECTANGLE;
 
       this.state = {
         ...this.state,
-        variables: {toolType},
+        variables: { toolType },
         // @ts-ignore
         typing: toolType === CanvasElementType.TEXT ? {
           ...this.state.typing,
           text: 'Hello World',
-          font: '20px Arial',
+          font: '20px Arial'
         } : false,
         // @ts-ignore
         drawing: toolType != CanvasElementType.TEXT ? {
@@ -202,10 +209,10 @@ export default class Colladraw {
           strokeWidth: 1,
           startPoint: {
             x: event.offsetX,
-            y: event.offsetY,
-          },
-        } : false,
-      }
+            y: event.offsetY
+          }
+        } : false
+      };
 
       if (this.state.variables.toolType) {
         let element: CanvasElement;
@@ -250,8 +257,8 @@ export default class Colladraw {
             drawing: {
               ...this.state.drawing,
               shape: element instanceof Shape ? element : undefined,
-              line: element instanceof Line ? element : undefined,
-            },
+              line: element instanceof Line ? element : undefined
+            }
           };
         } else if (element instanceof CanvasText) {
           element.color = '#000';
@@ -261,8 +268,8 @@ export default class Colladraw {
             typing: {
               ...this.state.typing,
               text: element.text,
-              textElement: element,
-            },
+              textElement: element
+            }
           };
 
           this.draw();
@@ -278,26 +285,26 @@ export default class Colladraw {
             ...this.state,
             selectionTransform: {
               resize: {
-                grip: kebabize(anchorConditionName),
+                grip: kebabize(anchorConditionName)
               }
             }
           };
 
           anchorFound = true;
         }
-      })
+      });
 
-      if (!anchorFound && this.grid[event.offsetY + this.gridPixelMerge - (event.offsetY % this.gridPixelMerge)][event.offsetX + this.gridPixelMerge - (event.offsetX % this.gridPixelMerge)] === this.state.selectedElement) {
+      if (!anchorFound && this.state.selectedElement) {
         this.state = {
           ...this.state,
           selectionTransform: {
             translate: {
               grip: {
                 x: event.offsetX - this.state.selectedElement.x,
-                y: event.offsetY - this.state.selectedElement.y,
-              },
-            },
-          },
+                y: event.offsetY - this.state.selectedElement.y
+              }
+            }
+          }
         };
       }
     }
@@ -308,26 +315,37 @@ export default class Colladraw {
       const x = event.offsetX;
       const y = event.offsetY;
 
+      if (this.state.drawing) {
+        const shouldRedraw = this.elements.some(element => element.selected);
+        this.elements.forEach(element => {
+          element.deselect();
+        });
+
+        if (shouldRedraw) {
+          this.draw();
+        }
+      }
+
       if (this.state.drawing && this.state.drawing.pencil) {
         const point = new Rectangle(x, y, 5, 5);
         point.selectable = false;
         this.addElement(point, false);
       } else if (this.state.drawing && this.state.drawing.eraser) {
-        this.context.globalCompositeOperation = "destination-out";
+        this.context.globalCompositeOperation = 'destination-out';
         const point = new Rectangle(x, y, 5, 5);
         point.fillColor = this.backgroundColor;
         point.strokeColor = this.backgroundColor;
         point.selectable = false;
         this.addElement(point, false);
-        this.context.globalCompositeOperation = "source-over";
+        this.context.globalCompositeOperation = 'source-over';
       } else if (this.state.drawing) {
         this.state = {
           ...this.state,
           drawing: {
             ...this.state.drawing,
-            endPoint: {x, y},
-          },
-        }
+            endPoint: { x, y }
+          }
+        };
 
         if (this.state.drawing && this.state.drawing.shape) {
           this.state.drawing.shape.width = this.state.drawing.endPoint.x - this.state.drawing.startPoint.x;
@@ -351,62 +369,64 @@ export default class Colladraw {
           this.canvas.canvas.dispatchEvent(CanvasEvents.CanvasElementMoved(this.state.drawing.line, event));
         }
       }
-    } else if (this.state.selectionTransform) {
-      if (this.state.selectionTransform.translate) {
-        const oldX = this.state.selectedElement.x;
-        const oldY = this.state.selectedElement.y;
+    } else if (this.state.selectedElement && this.state.selectionTransform) {
+      if (this.state.selectedElement) {
+        if (this.state.selectionTransform.translate) {
+          const oldX = this.state.selectedElement.x;
+          const oldY = this.state.selectedElement.y;
 
-        this.state.selectedElement.x = event.offsetX - this.state.selectionTransform.translate.grip.x;
-        this.state.selectedElement.y = event.offsetY - this.state.selectionTransform.translate.grip.y;
+          this.state.selectedElement.x = event.offsetX - this.state.selectionTransform.translate.grip.x;
+          this.state.selectedElement.y = event.offsetY - this.state.selectionTransform.translate.grip.y;
 
-        if (this.state.selectedElement instanceof Line) {
-          this.state.selectedElement.endX = this.state.selectedElement.endX + (this.state.selectedElement.x - oldX);
-          this.state.selectedElement.endY = this.state.selectedElement.endY + (this.state.selectedElement.y - oldY);
+          if (this.state.selectedElement instanceof Line) {
+            this.state.selectedElement.endX = this.state.selectedElement.endX + (this.state.selectedElement.x - oldX);
+            this.state.selectedElement.endY = this.state.selectedElement.endY + (this.state.selectedElement.y - oldY);
+          }
+
+          this.canvas.canvas.dispatchEvent(CanvasEvents.CanvasElementMoved(this.state.selectedElement, event));
+          this.canvas.canvas.dispatchEvent(CanvasEvents.CanvasElementTransformed(this.state.selectedElement, {
+            type: 'translate',
+            x: this.state.selectionTransform.translate.grip.x,
+            y: this.state.selectionTransform.translate.grip.y,
+            oldX,
+            oldY
+          }));
+        } else if (this.state.selectionTransform.resize) {
+          const oldX = this.state.selectedElement.x;
+          const oldY = this.state.selectedElement.y;
+          const oldWidth = this.state.selectedElement.width;
+          const oldHeight = this.state.selectedElement.height;
+
+          if (this.state.selectionTransform.resize.grip === 'top-left') {
+            ResizeFunctions.topLeft(this.state, event);
+          } else if (this.state.selectionTransform.resize.grip === 'top-right') {
+            ResizeFunctions.topRight(this.state, event);
+          } else if (this.state.selectionTransform.resize.grip === 'bottom-left') {
+            ResizeFunctions.bottomLeft(this.state, event);
+          } else if (this.state.selectionTransform.resize.grip === 'bottom-right') {
+            ResizeFunctions.bottomRight(this.state, event);
+          } else if (this.state.selectionTransform.resize.grip === 'top') {
+            ResizeFunctions.top(this.state, event);
+          } else if (this.state.selectionTransform.resize.grip === 'right') {
+            ResizeFunctions.right(this.state, event);
+          } else if (this.state.selectionTransform.resize.grip === 'bottom') {
+            ResizeFunctions.bottom(this.state, event);
+          } else if (this.state.selectionTransform.resize.grip === 'left') {
+            ResizeFunctions.left(this.state, event);
+          }
+
+          this.canvas.canvas.dispatchEvent((CanvasEvents.CanvasElementTransformed(this.state.selectedElement, {
+            type: 'resize',
+            x: this.state.selectedElement.x,
+            y: this.state.selectedElement.y,
+            width: this.state.selectedElement.width,
+            height: this.state.selectedElement.height,
+            oldX,
+            oldY,
+            oldWidth,
+            oldHeight
+          })));
         }
-
-        this.canvas.canvas.dispatchEvent(CanvasEvents.CanvasElementMoved(this.state.selectedElement, event));
-        this.canvas.canvas.dispatchEvent(CanvasEvents.CanvasElementTransformed(this.state.selectedElement, {
-          type: 'translate',
-          x: this.state.selectionTransform.translate.grip.x,
-          y: this.state.selectionTransform.translate.grip.y,
-          oldX,
-          oldY,
-        }));
-      } else if (this.state.selectionTransform.resize) {
-        const oldX = this.state.selectedElement.x;
-        const oldY = this.state.selectedElement.y;
-        const oldWidth = this.state.selectedElement.width;
-        const oldHeight = this.state.selectedElement.height;
-
-        if (this.state.selectionTransform.resize.grip === 'top-left') {
-          ResizeFunctions.topLeft(this.state, event);
-        } else if (this.state.selectionTransform.resize.grip === 'top-right') {
-          ResizeFunctions.topRight(this.state, event);
-        } else if (this.state.selectionTransform.resize.grip === 'bottom-left') {
-          ResizeFunctions.bottomLeft(this.state, event);
-        } else if (this.state.selectionTransform.resize.grip === 'bottom-right') {
-          ResizeFunctions.bottomRight(this.state, event);
-        } else if (this.state.selectionTransform.resize.grip === 'top') {
-          ResizeFunctions.top(this.state, event);
-        } else if (this.state.selectionTransform.resize.grip === 'right') {
-          ResizeFunctions.right(this.state, event);
-        } else if (this.state.selectionTransform.resize.grip === 'bottom') {
-          ResizeFunctions.bottom(this.state, event);
-        } else if (this.state.selectionTransform.resize.grip === 'left') {
-          ResizeFunctions.left(this.state, event);
-        }
-
-        this.canvas.canvas.dispatchEvent((CanvasEvents.CanvasElementTransformed(this.state.selectedElement, {
-          type: 'resize',
-          x: this.state.selectedElement.x,
-          y: this.state.selectedElement.y,
-          width: this.state.selectedElement.width,
-          height: this.state.selectedElement.height,
-          oldX,
-          oldY,
-          oldWidth,
-          oldHeight,
-        })));
       }
     }
 
@@ -435,6 +455,8 @@ export default class Colladraw {
     this.initGrid();
     this.generateGrid();
 
+    if (this.state.drawing) (this.state.drawing.shape ?? this.state.drawing.line).select();
+
     this.state.drawing = false;
     this.state.typing = false;
     this.state.selectionTransform = false;
@@ -442,26 +464,21 @@ export default class Colladraw {
   }
 
   onClick(event: MouseEvent) {
-    const clickedElement = this.grid[event.offsetY + this.gridPixelMerge - (event.offsetY % this.gridPixelMerge)][event.offsetX + this.gridPixelMerge - (event.offsetX % this.gridPixelMerge)];
+    const clickedElement = this.getClickedElement(event);
 
     if (clickedElement) {
       if (clickedElement.selectable) {
         this.canvas.canvas.dispatchEvent(CanvasEvents.CanvasElementClicked(clickedElement, event));
 
         if (!this.state.drawing && !this.state.typing && !this.onClickLocker) {
-          if (clickedElement && (!this.state.selectedElement || this.state.selectedElement == clickedElement)) {
-            clickedElement.select();
-            this.canvas.canvas.dispatchEvent(CanvasEvents.CanvasElementSelected(clickedElement));
-            this.state.selectedElement = clickedElement;
-            this.draw();
-          } else {
-            if (this.state.selectedElement) {
-              this.state.selectedElement.deselect()
-              this.canvas.canvas.dispatchEvent(CanvasEvents.CanvasElementDeselected(this.state.selectedElement));
-            }
-            this.state.selectedElement = false;
-            this.draw();
+          if (this.state.selectedElement) {
+            this.state.selectedElement.deselect();
           }
+
+          clickedElement.select();
+          this.canvas.canvas.dispatchEvent(CanvasEvents.CanvasElementSelected(clickedElement));
+          this.state.selectedElement = clickedElement;
+          this.draw();
         }
       }
     } else if (this.state.selectedElement) {
@@ -493,7 +510,7 @@ export default class Colladraw {
     return {
       timestamp: Date.now(),
       data: {
-        elements: this.elements.map(element => element.toJSON()),
+        elements: this.elements.map(element => element.toJSON())
       }
     };
   }
@@ -514,7 +531,7 @@ export default class Colladraw {
         return CanvasText.fromJSON(shape);
       }
 
-      return Shape.fromJSON(shape)
+      return Shape.fromJSON(shape);
     });
     this.draw();
   }

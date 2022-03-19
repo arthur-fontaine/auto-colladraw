@@ -17,6 +17,7 @@ export default class Colladraw {
     constructor(canvas: HTMLCanvasElement, gridPixelMerge?: number);
     private initGrid;
     generateGrid(): void;
+    private getClickedElement;
     draw(clear?: boolean): void;
     addElement(element: CanvasElement, toAddToHistory?: boolean): void;
     removeElement(elementToDelete: CanvasElement): void;
