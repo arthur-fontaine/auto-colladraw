@@ -37,18 +37,23 @@ export default class Colladraw {
   constructor(canvas: HTMLCanvasElement, gridPixelMerge: number = 5) {
     document.head.appendChild(document.createElement("script")).src = "https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js";
 
+    canvas.width = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
+
     this.canvas = {
       canvas,
       elements: [],
     };
     this.gridPixelMerge = gridPixelMerge;
 
-    const context = canvas.getContext("2d");
-    context.fillStyle = this.backgroundColor;
-    context.fillRect(0, 0, canvas.width, canvas.height);
+    this.context = canvas.getContext("2d");
+    this.context.fillStyle = this.backgroundColor;
+    this.context.fillRect(0, 0, canvas.width, canvas.height);
     this.background = canvas;
 
     this.addToHistory();
+
+    this.initGrid();
 
     this.canvas.canvas.addEventListener('mousedown', this.onMouseDown.bind(this));
     this.canvas.canvas.addEventListener('mouseup', this.onMouseUp.bind(this));
@@ -74,16 +79,14 @@ export default class Colladraw {
         this.redo();
       }
     });
-
-    this.initGrid();
   }
 
   private initGrid() {
     this.grid = []
-    for (let i = 0; i < this.canvas.canvas.width; i++) {
+    for (let i = 0; i < this.canvas.canvas.height; i++) {
       this.grid.push([]);
 
-      for (let j = 0; j < this.canvas.canvas.height; j++) {
+      for (let j = 0; j < this.canvas.canvas.width; j++) {
         this.grid[i].push(null);
       }
     }
