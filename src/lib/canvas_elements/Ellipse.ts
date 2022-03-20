@@ -8,13 +8,13 @@ export default class Ellipse extends Shape {
   }
 
   generateGrid(canvasGrid: CanvasGrid, gridPixelMerge: number) {
-    let minI = this.y;
+    let minI = this.height < 0 ? this.y + this.height : this.y;
     minI -= (minI % gridPixelMerge);
-    let minJ = this.x;
+    let minJ = this.width < 0 ? this.x + this.width : this.x;
     minJ -= (minJ % gridPixelMerge);
-    let maxI = this.y + this.height;
+    let maxI = this.height < 0 ? this.y : this.y + this.height;
     maxI += (gridPixelMerge - (maxI % gridPixelMerge));
-    let maxJ = this.x + this.width;
+    let maxJ = this.width < 0 ? this.x : this.x + this.width;
     maxJ += (gridPixelMerge - (maxJ % gridPixelMerge));
 
     for (let i = minI; i <= maxI; i += gridPixelMerge) {
@@ -25,12 +25,8 @@ export default class Ellipse extends Shape {
   }
 
   draw(context: CanvasRenderingContext2D) {
-    if (this.width < 0) {
-      this.width = 0;
-    }
-
     super.draw(context, () => {
-      context.ellipse(this.x + this.width / 2, this.y + this.height / 2, this.width / 2, this.height / 2, 0, 0, 2 * Math.PI);
+      context.ellipse(Math.abs(this.x + this.width / 2), Math.abs(this.y + this.height / 2), Math.abs(this.width / 2), Math.abs(this.height / 2), 0, 0, 2 * Math.PI);
       context.stroke();
       context.fill();
     });
