@@ -32,6 +32,7 @@ export default class Colladraw {
     changeFillColor(color: string): void;
     changeStrokeColor(color: string): void;
     changeStrokeWidth(width: number): void;
+    changeFont(font: string): void;
     changeToolType(type: CanvasElementType): void;
     toJSON(): ExportCanvas;
     load(json: ExportCanvas): void;

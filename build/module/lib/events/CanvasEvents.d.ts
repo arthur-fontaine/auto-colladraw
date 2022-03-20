@@ -18,6 +18,7 @@ interface TransformationResizeEvent {
     oldHeight: number;
 }
 declare type TransformationEvent = TransformationTranslateEvent | TransformationResizeEvent;
+export declare type AnchorPoint = 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight' | 'left' | 'right' | 'bottom' | 'top';
 declare const _default: {
     CanvasElementClicked: (element: CanvasElement, mouseevent: MouseEvent) => CustomEvent<{
         element: CanvasElement;
@@ -39,6 +40,17 @@ declare const _default: {
     }>;
     CanvasElementCreated: (element: CanvasElement) => CustomEvent<{
         element: CanvasElement;
+    }>;
+    CanvasAnchorPointClicked: (anchorPoint: AnchorPoint, mouseevent: MouseEvent) => CustomEvent<{
+        anchorPoint: AnchorPoint;
+        mouseevent: MouseEvent;
+    }>;
+    CanvasAnchorPointHovered: (anchorPoint: AnchorPoint, mouseevent: MouseEvent) => CustomEvent<{
+        anchorPoint: AnchorPoint;
+        mouseevent: MouseEvent;
+    }>;
+    CanvasAnchorPointLeave: (mouseevent: MouseEvent) => CustomEvent<{
+        mouseevent: MouseEvent;
     }>;
 };
 export default _default;

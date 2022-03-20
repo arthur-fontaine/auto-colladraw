@@ -9,7 +9,7 @@ import AnchorConditions from "./utils/AnchorConditions";
 import kebabize from "./utils/kebabize";
 import {ExportCanvas, ExportLine, ExportShape} from "../types/ExportCanvas";
 import Polygon from "./canvas_elements/Polygon";
-import CanvasEvents from "./events/CanvasEvents";
+import CanvasEvents, { type AnchorPoint } from "./events/CanvasEvents";
 import CanvasElement from "./canvas_elements/CanvasElement";
 import CanvasText from "./canvas_elements/CanvasText";
 import Line from "./canvas_elements/Line";
@@ -59,6 +59,32 @@ export default class Colladraw {
     this.canvas.canvas.addEventListener('mouseup', this.onMouseUp.bind(this));
     this.canvas.canvas.addEventListener('mousemove', this.onMouseMove.bind(this));
     this.canvas.canvas.addEventListener('click', this.onClick.bind(this));
+
+    canvas.addEventListener('anchor-point-hovered', (e: any) => {
+      if (e.detail.anchorPoint === 'top') {
+        document.body.style.cursor = 'ns-resize';
+      } else if (e.detail.anchorPoint === 'bottom') {
+        document.body.style.cursor = 'ns-resize';
+      } else if (e.detail.anchorPoint === 'left') {
+        document.body.style.cursor = 'ew-resize';
+      } else if (e.detail.anchorPoint === 'right') {
+        document.body.style.cursor = 'ew-resize';
+      } else if (e.detail.anchorPoint === 'topLeft') {
+        document.body.style.cursor = 'nwse-resize';
+      } else if (e.detail.anchorPoint === 'topRight') {
+        document.body.style.cursor = 'nesw-resize';
+      } else if (e.detail.anchorPoint === 'bottomLeft') {
+        document.body.style.cursor = 'nesw-resize';
+      } else if (e.detail.anchorPoint === 'bottomRight') {
+        document.body.style.cursor = 'nwse-resize';
+      } else {
+        document.body.style.cursor = 'default';
+      }
+    });
+
+    canvas.addEventListener('anchor-point-leave', () => {
+      document.body.style.cursor = 'default';
+    });
 
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Backspace') {
@@ -312,6 +338,21 @@ export default class Colladraw {
   }
 
   onMouseMove(event: MouseEvent) {
+    if (this.state.selectedElement) {
+      let anchorFound = false;
+
+      Object.entries(AnchorConditions).forEach(([anchorConditionName, anchorCondition]) => {
+        if (!anchorFound && !(this.state.selectedElement instanceof CanvasText) && anchorCondition(this.grid, 20, event, this.gridPixelMerge)) {
+          this.canvas.canvas.dispatchEvent(CanvasEvents.CanvasAnchorPointHovered(anchorConditionName as AnchorPoint, event));
+          anchorFound = true;
+        }
+      });
+
+      if (!anchorFound) {
+        this.canvas.canvas.dispatchEvent(CanvasEvents.CanvasAnchorPointLeave(event));
+      }
+    }
+
     if (!this.state.selectedElement) {
       const x = event.offsetX;
       const y = event.offsetY;

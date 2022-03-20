@@ -22,6 +22,8 @@ interface TransformationResizeEvent {
 
 type TransformationEvent = TransformationTranslateEvent | TransformationResizeEvent;
 
+export type AnchorPoint = 'topLeft' | 'topRight'| 'bottomLeft'| 'bottomRight'| 'left'| 'right'| 'bottom'| 'top';
+
 export default {
   CanvasElementClicked: (element: CanvasElement, mouseevent: MouseEvent) => new CustomEvent<{ element: CanvasElement, mouseevent: MouseEvent }>('element-clicked', {
     detail: { element, mouseevent }
@@ -45,5 +47,17 @@ export default {
 
   CanvasElementCreated: (element: CanvasElement) => new CustomEvent<{ element: CanvasElement }>('element-created', {
     detail: { element }
+  }),
+
+  CanvasAnchorPointClicked: (anchorPoint: AnchorPoint, mouseevent: MouseEvent) => new CustomEvent<{ anchorPoint: AnchorPoint, mouseevent: MouseEvent }>('anchor-point-clicked', {
+    detail: { anchorPoint, mouseevent }
+  }),
+
+  CanvasAnchorPointHovered: (anchorPoint: AnchorPoint, mouseevent: MouseEvent) => new CustomEvent<{ anchorPoint: AnchorPoint, mouseevent: MouseEvent }>('anchor-point-hovered', {
+    detail: { anchorPoint, mouseevent }
+  }),
+
+  CanvasAnchorPointLeave: (mouseevent: MouseEvent) => new CustomEvent<{ mouseevent: MouseEvent }>('anchor-point-leave', {
+    detail: { mouseevent }
   }),
 }
