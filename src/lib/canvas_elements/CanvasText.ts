@@ -6,6 +6,8 @@ export default class CanvasText extends CanvasElement {
   text: string;
   font: string;
   color: string;
+  highlightColor: string;
+  highlighted: boolean;
 
   constructor(
     text: string,
@@ -19,6 +21,10 @@ export default class CanvasText extends CanvasElement {
   }
 
   draw(context: CanvasRenderingContext2D) {
+    if (this.highlighted) {
+      this.highlight(context, false);
+    }
+
     context.font = this.font;
     context.fillStyle = this.color;
 
@@ -55,6 +61,17 @@ export default class CanvasText extends CanvasElement {
       for (let j = minJ; j <= maxJ; j += gridPixelMerge) {
         canvasGrid[i][j] = this;
       }
+    }
+  }
+
+  highlight(context: CanvasRenderingContext2D, redraw: boolean = true) {
+    context.fillStyle = this.highlightColor;
+    context.globalCompositeOperation = 'multiply';
+    context.fillRect(this.x, this.y - this.height, this.width, this.height);
+    context.globalCompositeOperation = 'source-over';
+
+    if (redraw) {
+      this.draw(context);
     }
   }
 
