@@ -1,5 +1,5 @@
 import { CanvasGrid } from "../../types/CanvasGrid";
-import { CanvasElement } from "../../index";
+import CanvasElement from "./CanvasElement";
 import { ExportLine } from "../../types/ExportCanvas";
 export default class Line extends CanvasElement {
     endX: number;

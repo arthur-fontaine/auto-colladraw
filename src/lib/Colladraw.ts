@@ -140,8 +140,8 @@ export default class Colladraw {
   }
 
   addElement(element: CanvasElement, toAddToHistory: boolean = true) {
-    this.canvas.canvas.dispatchEvent(CanvasEvents.CanvasElementCreated(element));
     this.canvas.elements.push(element);
+    this.canvas.canvas.dispatchEvent(CanvasEvents.CanvasElementCreated(element));
 
     if (toAddToHistory) {
       this.addToHistory();
@@ -517,7 +517,7 @@ export default class Colladraw {
   }
 
   load(json: ExportCanvas) {
-    this.canvas.elements = json.data.shapes.map(shape => {
+    this.canvas.elements = json.data.elements.map(shape => {
       if (shape.type === 'Rectangle') {
         return Rectangle.fromJSON(shape);
       } else if (shape.type === 'Ellipse') {
