@@ -18,6 +18,8 @@ export interface ExportCanvasText {
   text: string;
   font: string;
   color: string;
+  highlightColor: string;
+  highlighted: boolean;
 }
 
 export interface ExportLine {

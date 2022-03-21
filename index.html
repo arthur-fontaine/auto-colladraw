@@ -54,34 +54,6 @@
       //     colladraw.draw()
       //   }
       // });
-
-      const socket = io("http://localhost:8001");
-
-      const drawingId = 1;
-
-      socket.on('connect', function () {
-          console.info('Websocket connected');
-
-          socket.emit('join-drawing', `drawing-${drawingId}`);
-
-          socket.on('drawing-new-element', function({emitterId, ...data}) {
-              if (emitterId !== clientId) {
-                  colladraw.load(data);
-              }
-          });
-
-          function send() {
-              socket.emit('drawing-new-element', {
-                  data: colladraw.toJSON(),
-                  emitterId: clientId,
-                  room: `drawing-${drawingId}`
-              });
-          }
-
-          canvas.addEventListener('element-created', send);
-          canvas.addEventListener('element-moved', send);
-          canvas.addEventListener('element-transform', send);
-      });
     </script>
 
     <style>
@@ -118,7 +90,7 @@
         <button onclick="window.saved = colladraw.toJSON()">Save</button>
         <button onclick="colladraw.clear()">Clear</button>
         <button onclick="colladraw.load(window.saved)">Load</button>
-        <button onclick="colladraw.savePDF()">Save PDF</button>
+        <button id="save-pdf-btn">Save PDF</button>
     </div>
 </header>
 </body>

@@ -25,6 +25,7 @@ export default class Colladraw {
   gridPixelMerge: number = 5;
   background: HTMLCanvasElement;
   backgroundColor: string = '#fafafa';
+  disableBackspace: boolean = false;
   private state: State = {
     variables: {},
     history: {
@@ -87,7 +88,7 @@ export default class Colladraw {
     });
 
     window.addEventListener('keydown', (e) => {
-      if (e.key === 'Backspace') {
+      if (!this.disableBackspace && e.key === 'Backspace') {
         if (this.state.selectedElement) {
           this.removeElement(this.state.selectedElement);
           this.draw();
@@ -544,6 +545,10 @@ export default class Colladraw {
     this.state.variables.strokeWidth = width;
   }
 
+  changeFont(font: string) {
+    this.state.variables.font = font;
+  }
+
   changeToolType(type: CanvasElementType) {
     this.state.variables.toolType = type;
   }
@@ -586,18 +591,13 @@ export default class Colladraw {
   }
 
   toDataURL(): string {
+    this.elements.forEach((element) => {
+      element.deselect();
+    });
+
     this.context.fillStyle = this.backgroundColor;
     this.context.fillRect(0, 0, 999999, 999999);
     this.draw(false);
-
-    this.elements.forEach((element) => {
-      element.deselect();
-      this.changeFillColor(element instanceof Shape ? element.fillColor : element instanceof CanvasText || element instanceof Line ? element.color : undefined);
-      this.changeStrokeColor(element instanceof Shape ? element.strokeColor : undefined);
-      this.changeStrokeWidth(element instanceof Shape ? element.strokeWidth : undefined);
-      this.addElement(element, false);
-      this.draw(false);
-    });
 
     return this.canvas.canvas.toDataURL();
   }

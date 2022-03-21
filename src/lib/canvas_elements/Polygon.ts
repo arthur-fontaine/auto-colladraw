@@ -27,7 +27,7 @@ export default class Polygon extends Shape {
     minI -= (minI % gridPixelMerge);
     let minJ = Math.min(...this.coordinates.map(coordinate => coordinate[0]));
     minJ -= (minJ % gridPixelMerge);
-    let maxI = Math.max(...this.coordinates.map(coordinate => coordinate[1]));
+    let maxI = this.height > 0 ? Math.max(...this.coordinates.map(coordinate => coordinate[1])) : minI + Math.abs(this.height);
     maxI += (gridPixelMerge - (maxI % gridPixelMerge));
     let maxJ = Math.max(...this.coordinates.map(coordinate => coordinate[0]));
     maxJ += (gridPixelMerge - (maxJ % gridPixelMerge));

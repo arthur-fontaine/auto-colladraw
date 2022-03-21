@@ -12,6 +12,7 @@ export default class Colladraw {
     gridPixelMerge: number;
     background: HTMLCanvasElement;
     backgroundColor: string;
+    disableBackspace: boolean;
     private state;
     private onClickLocker;
     constructor(canvas: HTMLCanvasElement, gridPixelMerge?: number);
