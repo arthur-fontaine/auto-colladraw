@@ -69,6 +69,7 @@ export default class CanvasText extends CanvasElement {
     context.globalCompositeOperation = 'multiply';
     context.fillRect(this.x, this.y - this.height, this.width, this.height);
     context.globalCompositeOperation = 'source-over';
+    this.highlighted = true;
 
     if (redraw) {
       this.draw(context);
@@ -83,6 +84,8 @@ export default class CanvasText extends CanvasElement {
       text: this.text,
       font: this.font,
       color: this.color,
+      highlightColor: this.highlightColor,
+      highlighted: this.highlighted,
     };
   }
 
@@ -94,6 +97,8 @@ export default class CanvasText extends CanvasElement {
       json.font,
     );
     text.color = json.color;
+    text.highlightColor = json.highlightColor;
+    text.highlighted = json.highlighted;
     return text;
   }
 }
